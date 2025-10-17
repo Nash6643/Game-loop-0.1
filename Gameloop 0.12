@@ -1,0 +1,31 @@
+public class MovingSmiley {
+    public static void main(String[] args) throws InterruptedException {
+        int position = 0;          // initial position of the smiley
+        int width = 20;            // width of the "screen"
+        boolean movingRight = true;
+
+        while (true) {
+            // Clear the console (works in most terminals)
+            System.out.print("\033[H\033[2J");
+            System.out.flush();
+
+            // Print spaces before the smiley to move it
+            for (int i = 0; i < position; i++) {
+                System.out.print(" ");
+            }
+            System.out.println("😊");
+
+            // Update position
+            if (movingRight) {
+                position++;
+                if (position >= width) movingRight = false;
+            } else {
+                position--;
+                if (position <= 0) movingRight = true;
+            }
+
+            // Wait a bit before next frame
+            Thread.sleep(200);
+        }
+    }
+}
