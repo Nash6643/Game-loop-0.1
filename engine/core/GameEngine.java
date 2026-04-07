@@ -13,22 +13,24 @@ public class GameEngine implements Runnable {
     private Scene currentScene;
     private int currentFps = 0;
 
+    // Viewport dimensions
+    private int width = 800;
+    private int height = 600;
+
     public GameEngine(RenderPanel renderPanel) {
         this.renderPanel = renderPanel;
     }
+
+    public int getWidth() { return width; }
+    public int getHeight() { return height; }
 
     public boolean togglePause() {
         this.paused = !this.paused;
         return !this.paused;
     }
 
-    public boolean isPaused() {
-        return paused;
-    }
-
-    public int getCurrentFps() {
-        return currentFps;
-    }
+    public boolean isPaused() { return paused; }
+    public int getCurrentFps() { return currentFps; }
 
     public void setScene(Scene scene) {
         if (this.currentScene != null) {
