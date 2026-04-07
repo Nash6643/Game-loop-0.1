@@ -11,6 +11,9 @@ public class TestScene extends Scene {
     private double speed = 250.0;
     private int entitySize = 40;
     private Color entityColor = Color.CYAN;
+    
+    // Wall hit indicators
+    private boolean isColliding = false;
 
     private final InputManager input;
 
@@ -23,6 +26,8 @@ public class TestScene extends Scene {
 
     @Override
     public void update(double deltaTime) {
+        isColliding = false;
+
         if (input != null) {
             if (input.isKeyPressed(KeyEvent.VK_W) || input.isKeyPressed(KeyEvent.VK_UP)) { yPos -= speed * deltaTime; }
             if (input.isKeyPressed(KeyEvent.VK_S) || input.isKeyPressed(KeyEvent.VK_DOWN)) { yPos += speed * deltaTime; }
@@ -30,12 +35,12 @@ public class TestScene extends Scene {
             if (input.isKeyPressed(KeyEvent.VK_D) || input.isKeyPressed(KeyEvent.VK_RIGHT)) { xPos += speed * deltaTime; }
         }
 
-        // Screen Boundary Clamping
+        // Screen Boundary Clamping & Collision State Detection
         int halfSize = entitySize / 2;
-        if (xPos - halfSize < 0) xPos = halfSize;
-        if (xPos + halfSize > 800) xPos = 800 - halfSize;
-        if (yPos - halfSize < 0) yPos = halfSize;
-        if (yPos + halfSize > 600) yPos = 600 - halfSize;
+        if (xPos - halfSize < 0) { xPos = halfSize; isColliding = true; }
+        if (xPos + halfSize > 800) { xPos = 800 - halfSize; isColliding = true; }
+        if (yPos - halfSize < 0) { yPos = halfSize; isColliding = true; }
+        if (yPos + halfSize > 600) { yPos = 600 - halfSize; isColliding = true; }
     }
 
     @Override
@@ -44,7 +49,9 @@ public class TestScene extends Scene {
         g.fillRect(0, 0, 800, 600);
 
         int halfSize = entitySize / 2;
-        g.setColor(entityColor);
+        
+        // Change color feedback when touching viewport boundaries
+        g.setColor(isColliding ? Color.RED : entityColor);
         g.fillOval((int) xPos - halfSize, (int) yPos - halfSize, entitySize, entitySize);
     }
 
