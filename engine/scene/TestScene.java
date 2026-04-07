@@ -58,6 +58,10 @@ public class TestScene extends Scene {
     @Override
     public void dispose() {}
 
+    // Getters and Setters
     public void setSpeed(double speed) { this.speed = speed; }
     public double getSpeed() { return speed; }
+    public void setEntitySize(int size) { this.entitySize = size; }
+    public int getEntitySize() { return entitySize; }
+    public void setEntityColor(Color color) { this.entityColor = color; }
 }
