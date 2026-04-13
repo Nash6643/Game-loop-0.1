@@ -9,22 +9,22 @@ import javax.swing.JFrame;
 
 public class Game {
     public static void main(String[] args) {
-        JFrame window = new JFrame("Engine Core v1.1 - GUI Debugger");
+        JFrame window = new JFrame("Engine Core v1.2 - Interactive Sandbox");
         RenderPanel panel = new RenderPanel(800, 600);
         
         InputManager input = new InputManager();
         panel.addKeyListener(input);
 
         GameEngine engine = new GameEngine(panel);
-        engine.setScene(new TestScene());
+        TestScene testScene = new TestScene(input);
+        engine.setScene(testScene);
 
-        DebugOverlay debugOverlay = new DebugOverlay(engine);
+        DebugOverlay debugOverlay = new DebugOverlay(engine, testScene);
 
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setLayout(new BorderLayout());
         window.setResizable(false);
         
-        // Mount canvas in center and debug panel at the top
         window.add(debugOverlay, BorderLayout.NORTH);
         window.add(panel, BorderLayout.CENTER);
         
