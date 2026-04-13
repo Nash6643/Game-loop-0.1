@@ -1,5 +1,6 @@
 package engine.scene;
 
+import engine.fx.ParticleEmitter;
 import engine.input.InputManager;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -12,10 +13,9 @@ public class TestScene extends Scene {
     private int entitySize = 40;
     private Color entityColor = Color.CYAN;
     
-    // Wall hit indicators
     private boolean isColliding = false;
-
     private final InputManager input;
+    private final ParticleEmitter emitter = new ParticleEmitter();
 
     public TestScene(InputManager input) {
         this.input = input;
@@ -27,20 +27,28 @@ public class TestScene extends Scene {
     @Override
     public void update(double deltaTime) {
         isColliding = false;
+        boolean moving = false;
 
         if (input != null) {
-            if (input.isKeyPressed(KeyEvent.VK_W) || input.isKeyPressed(KeyEvent.VK_UP)) { yPos -= speed * deltaTime; }
-            if (input.isKeyPressed(KeyEvent.VK_S) || input.isKeyPressed(KeyEvent.VK_DOWN)) { yPos += speed * deltaTime; }
-            if (input.isKeyPressed(KeyEvent.VK_A) || input.isKeyPressed(KeyEvent.VK_LEFT)) { xPos -= speed * deltaTime; }
-            if (input.isKeyPressed(KeyEvent.VK_D) || input.isKeyPressed(KeyEvent.VK_RIGHT)) { xPos += speed * deltaTime; }
+            if (input.isKeyPressed(KeyEvent.VK_W) || input.isKeyPressed(KeyEvent.VK_UP)) { yPos -= speed * deltaTime; moving = true; }
+            if (input.isKeyPressed(KeyEvent.VK_S) || input.isKeyPressed(KeyEvent.VK_DOWN)) { yPos += speed * deltaTime; moving = true; }
+            if (input.isKeyPressed(KeyEvent.VK_A) || input.isKeyPressed(KeyEvent.VK_LEFT)) { xPos -= speed * deltaTime; moving = true; }
+            if (input.isKeyPressed(KeyEvent.VK_D) || input.isKeyPressed(KeyEvent.VK_RIGHT)) { xPos += speed * deltaTime; moving = true; }
         }
 
-        // Screen Boundary Clamping & Collision State Detection
+        // Screen Boundary Clamping
         int halfSize = entitySize / 2;
         if (xPos - halfSize < 0) { xPos = halfSize; isColliding = true; }
         if (xPos + halfSize > 800) { xPos = 800 - halfSize; isColliding = true; }
         if (yPos - halfSize < 0) { yPos = halfSize; isColliding = true; }
         if (yPos + halfSize > 600) { yPos = 600 - halfSize; isColliding = true; }
+
+        // Emit trail particles on movement
+        if (moving) {
+            emitter.emit(xPos, yPos, entityColor, 2);
+        }
+
+        emitter.update(deltaTime);
     }
 
     @Override
@@ -48,15 +56,18 @@ public class TestScene extends Scene {
         g.setColor(new Color(20, 20, 20));
         g.fillRect(0, 0, 800, 600);
 
+        // Render FX Layer below entity
+        emitter.render(g);
+
         int halfSize = entitySize / 2;
-        
-        // Change color feedback when touching viewport boundaries
         g.setColor(isColliding ? Color.RED : entityColor);
         g.fillOval((int) xPos - halfSize, (int) yPos - halfSize, entitySize, entitySize);
     }
 
     @Override
-    public void dispose() {}
+    public void dispose() {
+        emitter.clear();
+    }
 
     // Getters and Setters
     public void setSpeed(double speed) { this.speed = speed; }
@@ -64,4 +75,5 @@ public class TestScene extends Scene {
     public void setEntitySize(int size) { this.entitySize = size; }
     public int getEntitySize() { return entitySize; }
     public void setEntityColor(Color color) { this.entityColor = color; }
+    public ParticleEmitter getEmitter() { return emitter; }
 }
