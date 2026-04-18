@@ -2,6 +2,7 @@ package engine.scene;
 
 import engine.fx.ParticleEmitter;
 import engine.input.InputManager;
+import engine.physics.AABB;
 import engine.physics.Collider;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -15,6 +16,7 @@ public class TestScene extends Scene {
     private Color entityColor = Color.CYAN;
     
     private boolean isColliding = false;
+    private boolean debugDrawColliders = true;
     private final InputManager input;
     private final ParticleEmitter emitter = new ParticleEmitter();
     private final Collider playerCollider;
@@ -70,6 +72,13 @@ public class TestScene extends Scene {
         int halfSize = entitySize / 2;
         g.setColor(isColliding ? Color.RED : entityColor);
         g.fillOval((int) xPos - halfSize, (int) yPos - halfSize, entitySize, entitySize);
+
+        // Debug wireframe rendering for AABB
+        if (debugDrawColliders) {
+            AABB bounds = playerCollider.getBounds();
+            g.setColor(Color.GREEN);
+            g.drawRect((int) bounds.getX(), (int) bounds.getY(), (int) bounds.getWidth(), (int) bounds.getHeight());
+        }
     }
 
     @Override
@@ -85,4 +94,5 @@ public class TestScene extends Scene {
     public void setEntityColor(Color color) { this.entityColor = color; }
     public ParticleEmitter getEmitter() { return emitter; }
     public Collider getPlayerCollider() { return playerCollider; }
+    public void setDebugDrawColliders(boolean debugDrawColliders) { this.debugDrawColliders = debugDrawColliders; }
 }
