@@ -2,6 +2,7 @@ package engine.scene;
 
 import engine.fx.ParticleEmitter;
 import engine.input.InputManager;
+import engine.physics.Collider;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
@@ -16,9 +17,12 @@ public class TestScene extends Scene {
     private boolean isColliding = false;
     private final InputManager input;
     private final ParticleEmitter emitter = new ParticleEmitter();
+    private final Collider playerCollider;
 
     public TestScene(InputManager input) {
         this.input = input;
+        int halfSize = entitySize / 2;
+        this.playerCollider = new Collider(xPos - halfSize, yPos - halfSize, entitySize, entitySize, "Player");
     }
 
     @Override
@@ -42,6 +46,10 @@ public class TestScene extends Scene {
         if (xPos + halfSize > 800) { xPos = 800 - halfSize; isColliding = true; }
         if (yPos - halfSize < 0) { yPos = halfSize; isColliding = true; }
         if (yPos + halfSize > 600) { yPos = 600 - halfSize; isColliding = true; }
+
+        // Update Collider position & size
+        playerCollider.updatePosition(xPos - halfSize, yPos - halfSize);
+        playerCollider.getBounds().setSize(entitySize, entitySize);
 
         // Emit trail particles on movement
         if (moving) {
@@ -76,4 +84,5 @@ public class TestScene extends Scene {
     public int getEntitySize() { return entitySize; }
     public void setEntityColor(Color color) { this.entityColor = color; }
     public ParticleEmitter getEmitter() { return emitter; }
+    public Collider getPlayerCollider() { return playerCollider; }
 }
