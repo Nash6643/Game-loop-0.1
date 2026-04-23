@@ -16,6 +16,7 @@ public class DebugOverlay extends JPanel {
     private final JSlider speedSlider;
     private final JSlider sizeSlider;
     private final JCheckBox particleToggle;
+    private final JCheckBox colliderToggle;
 
     public DebugOverlay(GameEngine engine, TestScene scene) {
         setLayout(new FlowLayout(FlowLayout.LEFT, 10, 5));
@@ -52,6 +53,13 @@ public class DebugOverlay extends JPanel {
         particleToggle.setOpaque(false);
         particleToggle.addActionListener(e -> scene.getEmitter().setEnabled(particleToggle.isSelected()));
 
+        // Wireframe Colliders Debug Toggle
+        colliderToggle = new JCheckBox("Show Bounds", true);
+        colliderToggle.setFocusable(false);
+        colliderToggle.setForeground(Color.WHITE);
+        colliderToggle.setOpaque(false);
+        colliderToggle.addActionListener(e -> scene.setDebugDrawColliders(colliderToggle.isSelected()));
+
         add(fpsLabel);
         add(pauseButton);
         add(speedLbl);
@@ -59,6 +67,7 @@ public class DebugOverlay extends JPanel {
         add(sizeLbl);
         add(sizeSlider);
         add(particleToggle);
+        add(colliderToggle);
     }
 
     public void updateMetrics(int currentFps) {
