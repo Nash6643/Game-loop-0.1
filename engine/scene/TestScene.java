@@ -127,6 +127,22 @@ public class TestScene extends Scene {
         g.setTransform(originalTransform);
     }
 
+    public SceneState saveState() {
+        return new SceneState(xPos, yPos, entitySize, camera.getX(), camera.getY());
+    }
+
+    public void loadState(SceneState snapshot) {
+        if (snapshot == null) return;
+        this.xPos = snapshot.getPlayerX();
+        this.yPos = snapshot.getPlayerY();
+        this.entitySize = snapshot.getPlayerSize();
+        this.camera.setPosition(snapshot.getCameraX(), snapshot.getCameraY());
+        
+        int halfSize = entitySize / 2;
+        this.playerCollider.updatePosition(xPos - halfSize, yPos - halfSize);
+        this.playerCollider.getBounds().setSize(entitySize, entitySize);
+    }
+
     @Override
     public void dispose() {
         emitter.clear();
