@@ -1,6 +1,8 @@
 package engine.scene;
 
+import engine.entity.EntityState;
 import engine.fx.ParticleEmitter;
+import engine.graphics.Camera;
 import engine.input.InputManager;
 import engine.physics.AABB;
 import engine.physics.Collider;
@@ -9,6 +11,7 @@ import engine.physics.TriggerZone;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
+import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,11 +22,12 @@ public class TestScene extends Scene {
     private int entitySize = 40;
     private Color entityColor = Color.CYAN;
     
-    private boolean isColliding = false;
+    private EntityState state = EntityState.IDLE;
     private boolean debugDrawColliders = true;
     private final InputManager input;
     private final ParticleEmitter emitter = new ParticleEmitter();
     private final Collider playerCollider;
+    private final Camera camera = new Camera(800, 600);
 
     private final List<Obstacle> obstacles = new ArrayList<>();
     private final List<TriggerZone> triggerZones = new ArrayList<>();
@@ -44,32 +48,34 @@ public class TestScene extends Scene {
 
     @Override
     public void update(double deltaTime) {
-        isColliding = false;
+        state = EntityState.IDLE;
         boolean moving = false;
         double oldX = xPos;
         double oldY = yPos;
 
-        if (input != null) {
+        if (input != null && state.canMove()) {
             if (input.isKeyPressed(KeyEvent.VK_W) || input.isKeyPressed(KeyEvent.VK_UP)) { yPos -= speed * deltaTime; moving = true; }
             if (input.isKeyPressed(KeyEvent.VK_S) || input.isKeyPressed(KeyEvent.VK_DOWN)) { yPos += speed * deltaTime; moving = true; }
             if (input.isKeyPressed(KeyEvent.VK_A) || input.isKeyPressed(KeyEvent.VK_LEFT)) { xPos -= speed * deltaTime; moving = true; }
             if (input.isKeyPressed(KeyEvent.VK_D) || input.isKeyPressed(KeyEvent.VK_RIGHT)) { xPos += speed * deltaTime; moving = true; }
         }
 
+        if (moving) state = EntityState.MOVING;
+
         // Screen Boundary Clamping
         int halfSize = entitySize / 2;
-        if (xPos - halfSize < 0) { xPos = halfSize; isColliding = true; }
-        if (xPos + halfSize > 800) { xPos = 800 - halfSize; isColliding = true; }
-        if (yPos - halfSize < 0) { yPos = halfSize; isColliding = true; }
-        if (yPos + halfSize > 600) { yPos = 600 - halfSize; isColliding = true; }
+        if (xPos - halfSize < 0) { xPos = halfSize; state = EntityState.COLLIDING; }
+        if (xPos + halfSize > 800) { xPos = 800 - halfSize; state = EntityState.COLLIDING; }
+        if (yPos - halfSize < 0) { yPos = halfSize; state = EntityState.COLLIDING; }
+        if (yPos + halfSize > 600) { yPos = 600 - halfSize; state = EntityState.COLLIDING; }
 
         playerCollider.updatePosition(xPos - halfSize, yPos - halfSize);
         playerCollider.getBounds().setSize(entitySize, entitySize);
 
-        // Obstacle Collision Checks with Rollback
+        // Obstacle Collision Checks
         for (Obstacle obs : obstacles) {
             if (playerCollider.checkCollision(obs.getCollider())) {
-                isColliding = true;
+                state = EntityState.COLLIDING;
                 xPos = oldX;
                 yPos = oldY;
                 playerCollider.updatePosition(xPos - halfSize, yPos - halfSize);
@@ -84,9 +90,12 @@ public class TestScene extends Scene {
             }
         }
 
-        if (moving && !isColliding) {
+        if (moving && state != EntityState.COLLIDING) {
             emitter.emit(xPos, yPos, entityColor, 2);
         }
+
+        // Update Camera Viewport Target
+        camera.follow(xPos, yPos, 0.1);
 
         emitter.update(deltaTime);
     }
@@ -96,14 +105,17 @@ public class TestScene extends Scene {
         g.setColor(new Color(20, 20, 20));
         g.fillRect(0, 0, 800, 600);
 
-        // Render world objects
+        AffineTransform originalTransform = g.getTransform();
+        g.translate(-camera.getX(), -camera.getY());
+
+        // Render world objects with camera transform
         for (TriggerZone zone : triggerZones) zone.render(g);
         for (Obstacle obs : obstacles) obs.render(g);
 
         emitter.render(g);
 
         int halfSize = entitySize / 2;
-        g.setColor(isColliding ? Color.RED : entityColor);
+        g.setColor(state == EntityState.COLLIDING ? Color.RED : entityColor);
         g.fillOval((int) xPos - halfSize, (int) yPos - halfSize, entitySize, entitySize);
 
         if (debugDrawColliders) {
@@ -111,6 +123,8 @@ public class TestScene extends Scene {
             g.setColor(Color.GREEN);
             g.drawRect((int) bounds.getX(), (int) bounds.getY(), (int) bounds.getWidth(), (int) bounds.getHeight());
         }
+
+        g.setTransform(originalTransform);
     }
 
     @Override
@@ -126,5 +140,7 @@ public class TestScene extends Scene {
     public void setEntityColor(Color color) { this.entityColor = color; }
     public ParticleEmitter getEmitter() { return emitter; }
     public Collider getPlayerCollider() { return playerCollider; }
+    public EntityState getState() { return state; }
+    public Camera getCamera() { return camera; }
     public void setDebugDrawColliders(boolean debugDrawColliders) { this.debugDrawColliders = debugDrawColliders; }
 }
