@@ -1,5 +1,6 @@
 package engine.ui;
 
+import engine.audio.SoundManager;
 import engine.core.GameEngine;
 import engine.scene.TestScene;
 import java.awt.Color;
@@ -17,8 +18,9 @@ public class DebugOverlay extends JPanel {
     private final JSlider sizeSlider;
     private final JCheckBox particleToggle;
     private final JCheckBox colliderToggle;
+    private final JCheckBox audioToggle;
 
-    public DebugOverlay(GameEngine engine, TestScene scene) {
+    public DebugOverlay(GameEngine engine, TestScene scene, SoundManager soundManager) {
         setLayout(new FlowLayout(FlowLayout.LEFT, 10, 5));
         setBackground(new Color(30, 30, 30, 240));
         
@@ -60,6 +62,17 @@ public class DebugOverlay extends JPanel {
         colliderToggle.setOpaque(false);
         colliderToggle.addActionListener(e -> scene.setDebugDrawColliders(colliderToggle.isSelected()));
 
+        // Audio Toggle
+        audioToggle = new JCheckBox("Audio", true);
+        audioToggle.setFocusable(false);
+        audioToggle.setForeground(Color.WHITE);
+        audioToggle.setOpaque(false);
+        audioToggle.addActionListener(e -> {
+            if (soundManager != null) {
+                soundManager.setSoundEnabled(audioToggle.isSelected());
+            }
+        });
+
         add(fpsLabel);
         add(pauseButton);
         add(speedLbl);
@@ -68,6 +81,7 @@ public class DebugOverlay extends JPanel {
         add(sizeSlider);
         add(particleToggle);
         add(colliderToggle);
+        add(audioToggle);
     }
 
     public void updateMetrics(int currentFps) {
