@@ -1,9 +1,43 @@
 package engine.core;
 
+import engine.graphics.RenderPanel;
+import engine.scene.Scene;
+
 public class GameEngine implements Runnable {
     private static final int TARGET_FPS = 60;
     private boolean running = false;
+    private boolean paused = false;
     private Thread gameThread;
+    
+    private final RenderPanel renderPanel;
+    private Scene currentScene;
+    private int currentFps = 0;
+
+    public GameEngine(RenderPanel renderPanel) {
+        this.renderPanel = renderPanel;
+    }
+
+    public boolean togglePause() {
+        this.paused = !this.paused;
+        return !this.paused;
+    }
+
+    public boolean isPaused() {
+        return paused;
+    }
+
+    public int getCurrentFps() {
+        return currentFps;
+    }
+
+    public void setScene(Scene scene) {
+        if (this.currentScene != null) {
+            this.currentScene.dispose();
+        }
+        this.currentScene = scene;
+        this.currentScene.init();
+        this.renderPanel.setCurrentScene(scene);
+    }
 
     public synchronized void start() {
         if (running) return;
@@ -26,16 +60,36 @@ public class GameEngine implements Runnable {
     public void run() {
         double timePerFrame = 1_000_000_000.0 / TARGET_FPS;
         long previousTime = System.nanoTime();
-        double deltaF = 0;
+        
+        int frames = 0;
+        long lastCheck = System.currentTimeMillis();
 
         while (running) {
             long currentTime = System.nanoTime();
-            deltaF += (currentTime - previousTime) / timePerFrame;
-            previousTime = currentTime;
+            double deltaTime = (currentTime - previousTime) / 1_000_000_000.0;
 
-            if (deltaF >= 1) {
-                // Trigger tick and render
-                deltaF--;
+            if (!paused && currentScene != null) {
+                currentScene.update(deltaTime);
+            }
+            
+            renderPanel.repaint();
+
+            previousTime = currentTime;
+            frames++;
+
+            if (System.currentTimeMillis() - lastCheck >= 1000) {
+                lastCheck += 1000;
+                currentFps = frames;
+                frames = 0;
+            }
+
+            long sleepTime = (long) ((timePerFrame - (System.nanoTime() - currentTime)) / 1_000_000);
+            if (sleepTime > 0) {
+                try {
+                    Thread.sleep(sleepTime);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
