@@ -8,6 +8,8 @@ import engine.physics.AABB;
 import engine.physics.Collider;
 import engine.physics.Obstacle;
 import engine.physics.TriggerZone;
+import engine.tile.TileMap;
+import engine.tile.TileType;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
@@ -28,6 +30,7 @@ public class TestScene extends Scene {
     private final ParticleEmitter emitter = new ParticleEmitter();
     private final Collider playerCollider;
     private final Camera camera = new Camera(800, 600);
+    private final TileMap tileMap = new TileMap(20, 15, 40);
 
     private final List<Obstacle> obstacles = new ArrayList<>();
     private final List<TriggerZone> triggerZones = new ArrayList<>();
@@ -37,7 +40,16 @@ public class TestScene extends Scene {
         int halfSize = entitySize / 2;
         this.playerCollider = new Collider(xPos - halfSize, yPos - halfSize, entitySize, entitySize, "Player");
 
-        // Populate test obstacles and triggers
+        // Build outer boundary with stone tiles
+        for (int x = 0; x < tileMap.getCols(); x++) {
+            tileMap.setTile(x, 0, TileType.STONE_WALL);
+            tileMap.setTile(x, tileMap.getRows() - 1, TileType.STONE_WALL);
+        }
+        for (int y = 0; y < tileMap.getRows(); y++) {
+            tileMap.setTile(0, y, TileType.STONE_WALL);
+            tileMap.setTile(tileMap.getCols() - 1, y, TileType.STONE_WALL);
+        }
+
         obstacles.add(new Obstacle(200, 150, 100, 100, new Color(100, 100, 100)));
         obstacles.add(new Obstacle(500, 350, 120, 80, new Color(100, 100, 100)));
         triggerZones.add(new TriggerZone(350, 100, 80, 80, "Checkpoint", Color.YELLOW));
@@ -62,7 +74,6 @@ public class TestScene extends Scene {
 
         if (moving) state = EntityState.MOVING;
 
-        // Screen Boundary Clamping
         int halfSize = entitySize / 2;
         if (xPos - halfSize < 0) { xPos = halfSize; state = EntityState.COLLIDING; }
         if (xPos + halfSize > 800) { xPos = 800 - halfSize; state = EntityState.COLLIDING; }
@@ -72,7 +83,6 @@ public class TestScene extends Scene {
         playerCollider.updatePosition(xPos - halfSize, yPos - halfSize);
         playerCollider.getBounds().setSize(entitySize, entitySize);
 
-        // Obstacle Collision Checks
         for (Obstacle obs : obstacles) {
             if (playerCollider.checkCollision(obs.getCollider())) {
                 state = EntityState.COLLIDING;
@@ -83,7 +93,6 @@ public class TestScene extends Scene {
             }
         }
 
-        // Trigger Checks
         for (TriggerZone zone : triggerZones) {
             if (zone.checkTrigger(playerCollider)) {
                 emitter.emit(xPos, yPos, Color.YELLOW, 1);
@@ -94,9 +103,7 @@ public class TestScene extends Scene {
             emitter.emit(xPos, yPos, entityColor, 2);
         }
 
-        // Update Camera Viewport Target
         camera.follow(xPos, yPos, 0.1);
-
         emitter.update(deltaTime);
     }
 
@@ -108,7 +115,8 @@ public class TestScene extends Scene {
         AffineTransform originalTransform = g.getTransform();
         g.translate(-camera.getX(), -camera.getY());
 
-        // Render world objects with camera transform
+        tileMap.render(g);
+
         for (TriggerZone zone : triggerZones) zone.render(g);
         for (Obstacle obs : obstacles) obs.render(g);
 
@@ -127,28 +135,9 @@ public class TestScene extends Scene {
         g.setTransform(originalTransform);
     }
 
-    public SceneState saveState() {
-        return new SceneState(xPos, yPos, entitySize, camera.getX(), camera.getY());
-    }
-
-    public void loadState(SceneState snapshot) {
-        if (snapshot == null) return;
-        this.xPos = snapshot.getPlayerX();
-        this.yPos = snapshot.getPlayerY();
-        this.entitySize = snapshot.getPlayerSize();
-        this.camera.setPosition(snapshot.getCameraX(), snapshot.getCameraY());
-        
-        int halfSize = entitySize / 2;
-        this.playerCollider.updatePosition(xPos - halfSize, yPos - halfSize);
-        this.playerCollider.getBounds().setSize(entitySize, entitySize);
-    }
-
     @Override
-    public void dispose() {
-        emitter.clear();
-    }
+    public void dispose() { emitter.clear(); }
 
-    // Getters and Setters
     public void setSpeed(double speed) { this.speed = speed; }
     public double getSpeed() { return speed; }
     public void setEntitySize(int size) { this.entitySize = size; }
@@ -158,5 +147,6 @@ public class TestScene extends Scene {
     public Collider getPlayerCollider() { return playerCollider; }
     public EntityState getState() { return state; }
     public Camera getCamera() { return camera; }
+    public TileMap getTileMap() { return tileMap; }
     public void setDebugDrawColliders(boolean debugDrawColliders) { this.debugDrawColliders = debugDrawColliders; }
 }
